@@ -15,7 +15,9 @@ mp_drawing = mp.solutions.drawing_utils # Drawing utilities
 
 def handle_left_click(event, x, y, flags, points):
     if event == cv2.EVENT_LBUTTONDOWN:
+        print(f"Point: [{x}, {y}]\n")
         points.append([x, y])
+
 
 def draw_polygon (frame, points):
     for point in points:
@@ -24,9 +26,15 @@ def draw_polygon (frame, points):
     return frame
 
 
-start_detect = False
+# Debug Config
+start_detect = True
+points = [[185, 152], [512, 152], [534, 474], [185, 474], [185, 152]]
+
+# Actual Config
+# start_detect = False
+# points = []
+
 model = Detect_final()
-points = []
 Ptime = 0
 
 video_path = "video/wakeup_3.mp4"

@@ -42,4 +42,4 @@ model.add(Dense(units = 1, activation="sigmoid"))
 model.compile(optimizer="adam", metrics = ['accuracy'], loss = "binary_crossentropy")
 
 model.fit(X_train, y_train, epochs=16, batch_size=32,validation_data=(X_test, y_test))
-model.save("model.h5")
+model.save("model")

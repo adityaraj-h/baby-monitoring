@@ -1,16 +1,21 @@
 import cv2
-import mediapipe as mp
+
 import numpy as np
+
 import time
-from datetime import datetime
 import threading
+from datetime import datetime
+
 import tensorflow as tf
+import keras
+import mediapipe as mp
+from mediapipe.python.solutions.drawing_utils import _normalized_to_pixel_coordinates as denormalize_coordinates
+
 from shapely.geometry import Point
 from shapely.geometry.polygon import Polygon
-from mediapipe.python.solutions.drawing_utils import _normalized_to_pixel_coordinates as denormalize_coordinates
-from telegram_notification import send_telegram_Wakeup
-from telegram_notification import send_telegram_Outside
-from telegram_notification import send_telegram_Moving
+
+from telebot import TeleBot
+
 from voice import voice_Alert_Wakeup
 from voice import voice_Alert_Outside
 from voice import voice_Alert_Moving
@@ -21,6 +26,10 @@ mp_drawing = mp.solutions.drawing_utils # Drawing utilities
 
 class Detect_final():
     def __init__(self):
+        # TODO: Initialize the Token and CHAT_ID here
+        self.TOKEN = "5934982411:AAESp8WWokgcOrHOFO7vfFgZCwgdAkJuGj4"
+        self.CHAT_ID = 1572312862
+        self.tel = TeleBot(self.TOKEN)
         self.i = 0
         self.j = 0
         self.k = 0        
@@ -34,10 +43,12 @@ class Detect_final():
         self.sentence_lable = []
         self.label = "Waiting"
         self.label_eye = "Waiting"
-        self.label_outside = "Waiting"        
+        self.label_outside = "Waiting"       
         self.flag_ouside = 0
-        self.model = tf.keras.models.load_model("model.h5")
-        self.model_ear = tf.keras.models.load_model("model30.h5")
+        self.model = keras.models.load_model("model")
+        # TODO: Might need to uncomment later
+        # self.model_ear = tf.keras.models.load_model("model30.h5")
+
         #Define 12 eye landmark
         self.eye_idxs = {
             "left": [362, 385, 387, 263, 373, 380],
@@ -63,7 +74,7 @@ class Detect_final():
 
         self.EAR_txt_pos = (10, 30)
         self.last_alert = None
-        self.alert_telegram_each = 15
+        self.alert_telegram_each = 60  # seconds
 
     def draw_prediction(self, centroid, points):
         if isInside(points, centroid):
@@ -80,53 +91,67 @@ class Detect_final():
         return polygon.contains(centroid)
          
     def alert_Wakeup(self):
-        thread = threading.Thread(target=send_telegram_Outside())
-        thread1 = threading.Thread(target=voice_Alert_Outside())
-        thread2 = threading.Thread(target=send_telegram_Moving())
-        thread3 = threading.Thread(target=voice_Alert_Moving())
-        thread4 = threading.Thread(target=send_telegram_Wakeup())
-        thread5 = threading.Thread(target=voice_Alert_Wakeup())
+        # thread = threading.Thread(target=self.tel.send_message(self.CHAT_ID, "Baby Outside"))
+        thread = threading.Thread(target=print("TELEGRAM => ", "Baby Outside"))
+        # thread1 = threading.Thread(target=voice_Alert_Outside())
+        
+        # thread2 = threading.Thread(target=self.tel.send_message(self.CHAT_ID, "Baby Moving"))
+        thread2 = threading.Thread(target=print("TELEGRAM => ", "Baby Moving"))
+        # thread3 = threading.Thread(target=voice_Alert_Moving())
+
+        # thread4 = threading.Thread(target=self.tel.send_message(self.CHAT_ID, "Baby Wakeup"))
+        thread4 = threading.Thread(target=print("TELEGRAM => ", "Baby Wakeup"))
+        # thread5 = threading.Thread(target=voice_Alert_Wakeup())
+
         if (self.last_alert is None) or (
-                (datetime.datetime.utcnow() - self.last_alert).total_seconds() > self.alert_telegram_each):
-            self.last_alert = datetime.datetime.utcnow()
-            if self.label == "MOVING" and self.label_outside == "OUTSIDE" and self.label_eye == "WAKE UP":
+                (datetime.datetime.now() - self.last_alert).total_seconds() > self.alert_telegram_each):
+            
+            self.last_alert = datetime.datetime.now()
+
+            # if self.label == "MOVING" and self.label_outside == "OUTSIDE" and self.label_eye == "WAKE UP":
+            if self.label == "MOVING" and self.label_outside == "OUTSIDE":
                 thread.start()
-                thread1.start()
+                # thread1.start()
                 thread2.start()
-                thread3.start()
+                # thread3.start()
                 thread4.start()
-                thread5.start()
-            elif self.label == "MOVING" and self.label_outside == "OUTSIDE" and self.label_eye == "SLEEPING":
+                # thread5.start()
+            # elif self.label == "MOVING" and self.label_outside == "OUTSIDE" and self.label_eye == "SLEEPING":
+            elif self.label == "MOVING" and self.label_outside == "OUTSIDE":
                 thread.start()
-                thread1.start()
-            elif self.label == "MOVING" and self.label_outside == "INSIDE" and self.label_eye == "WAKE UP":
+                # thread1.start()
+            # elif self.label == "MOVING" and self.label_outside == "INSIDE" and self.label_eye == "WAKE UP":
+            elif self.label == "MOVING" and self.label_outside == "INSIDE":
                 thread2.start()
-                thread3.start()
+                # thread3.start()
                 thread4.start()
-                thread5.start()
-            elif self.label == "MOVING" and self.label_outside == "INSIDE" and self.label_eye == "SLEEPING":
+                # thread5.start()
+            # elif self.label == "MOVING" and self.label_outside == "INSIDE" and self.label_eye == "SLEEPING":
+            elif self.label == "MOVING" and self.label_outside == "INSIDE":
                 thread2.start()
-                thread3.start()  
-            elif self.label == "NO MOVING" and self.label_outside == "OUTSIDE" and self.label_eye == "WAKE UP":
+                # thread3.start()  
+            # elif self.label == "NO MOVING" and self.label_outside == "OUTSIDE" and self.label_eye == "WAKE UP":
+            elif self.label == "NO MOVING" and self.label_outside == "OUTSIDE":
                 thread.start()
-                thread1.start()
+                # thread1.start()
                 thread4.start()
-                thread5.start()
-            elif self.label == "NO MOVING" and self.label_outside == "INSIDE" and self.label_eye == "WAKE UP":
+                # thread5.start()
+            # elif self.label == "NO MOVING" and self.label_outside == "INSIDE" and self.label_eye == "WAKE UP":
+            elif self.label == "NO MOVING" and self.label_outside == "INSIDE":
                 thread4.start()
-                thread5.start()
+                # thread5.start()
             else: 
                 pass            
               
-    def alert_Wakeup(self):
-        # cv2.putText(frame, "OUTSIDE", (250, 70), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
-        if (self.last_alert is None) or (
-                (datetime.datetime.utcnow() - self.last_alert).total_seconds() > self.alert_telegram_each):
-            self.last_alert = datetime.datetime.utcnow()
-            thread = threading.Thread(target=send_telegram_Wakeup())
-            thread1 = threading.Thread(target=voice_Alert_Wakeup())
-            thread.start()
-            thread1.start()
+    # def alert_Wakeup(self):
+    #     # cv2.putText(frame, "OUTSIDE", (250, 70), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
+    #     if (self.last_alert is None) or (
+    #             (datetime.datetime.utcnow() - self.last_alert).total_seconds() > self.alert_telegram_each):
+    #         self.last_alert = datetime.datetime.utcnow()
+    #         thread = threading.Thread(target=self.tel.send_mesage(self.CHAT_ID, "Baby Wakeup"))
+    #         thread1 = threading.Thread(target=voice_Alert_Wakeup())
+    #         # thread.start()
+    #         thread1.start()
 
     
     def alert_Outsize(self):
@@ -134,21 +159,21 @@ class Detect_final():
         if (self.last_alert is None) or (
                 (datetime.datetime.utcnow() - self.last_alert).total_seconds() > self.alert_telegram_each):
             self.last_alert = datetime.datetime.utcnow()
-            thread = threading.Thread(target=send_telegram_Outside())
+            thread = threading.Thread(target=self.tel.send_message(self.CHAT_ID, "Baby Outside"))
             thread1 = threading.Thread(target=voice_Alert_Outside())
             thread.start()
             thread1.start()
 
     
-    def alert_Moving(self):
-        if (self.last_alert is None) or (
-                (datetime.datetime.utcnow() - self.last_alert).total_seconds() > self.alert_telegram_each):
-            self.last_alert = datetime.datetime.utcnow()
-            thread = threading.Thread(target=send_telegram_Moving())
-            thread1 = threading.Thread(target=voice_Alert_Moving())
-            thread.start()
-            thread1.start()
-        return frame
+    # def alert_Moving(self):
+    #     if (self.last_alert is None) or (
+    #             (datetime.datetime.utcnow() - self.last_alert).total_seconds() > self.alert_telegram_each):
+    #         self.last_alert = datetime.datetime.utcnow()
+    #         thread = threading.Thread(target=send_telegram_Moving())
+    #         thread1 = threading.Thread(target=voice_Alert_Moving())
+    #         thread.start()
+    #         thread1.start()
+    #     return frame
 
     def draw_class_on_image_outside(self, label, frame):
         font = cv2.FONT_HERSHEY_SIMPLEX
@@ -204,10 +229,10 @@ class Detect_final():
             or self.draw_prediction(test_point1, points) == False 
             or self.draw_prediction(test_point4, points) == False
             or self.draw_prediction(test_point5, points) == False):
-            # cv2.imwrite("alert_outside.png", cv2.resize(frame, dsize=None, fx=0.5, fy=0.5))
+            cv2.imwrite("./snapshot/alert_outside.png", cv2.resize(frame, dsize=None, fx=0.5, fy=0.5))
             # print("save_outside")
-            # t4 = threading.Thread(target = self.alert_Wakeup())
-            # t4.start()           
+            t4 = threading.Thread(target = self.alert_Wakeup())
+            t4.start()           
             self.label_outside = "OUTSIDE"                   
         else:
             self.label_outside = "INSIDE"
@@ -219,13 +244,13 @@ class Detect_final():
         lm_list = np.array(lm_list)
         lm_list = np.expand_dims(lm_list, axis=0)
         results = model.predict(lm_list)
-        print(results[0][0])
+        # print(results[0][0])
         if results[0][0] > 0.5:
-            self.label = "BODY MOVING"
-            # cv2.imwrite("alert_moving.png", cv2.resize(frame, dsize=None, fx=0.5, fy=0.5))
+            self.label = "MOVING"
+            cv2.imwrite("./snapshot/alert_moving.png", cv2.resize(frame, dsize=None, fx=0.5, fy=0.5))
             # print("save_moving")
-            # t5 = threading.Thread(target = self.alert_Wakeup())
-            # t5.start()
+            t5 = threading.Thread(target = self.alert_Wakeup())
+            t5.start()
         else:
             self.label = "NO MOVING"        
         return self.label
@@ -234,13 +259,13 @@ class Detect_final():
         lm_list = np.array(lm_list) 
         lm_list = np.expand_dims(lm_list, axis=0)
         results_eye = model.predict(lm_list)
-        print(results_eye[0][0])
+        # print(results_eye[0][0])
         if results_eye[0][0] > 0.5:
             self.label_eye = "WAKE UP"
-            # cv2.imwrite("alert_wakeup.png", cv2.resize(frame, dsize=None, fx=0.5, fy=0.5))
+            cv2.imwrite("./snapshot/alert_wakeup.png", cv2.resize(frame, dsize=None, fx=0.5, fy=0.5))
             # print("Save_wakeup")
-            # t6 = threading.Thread(target = self.alert_Wakeup())
-            # t6.start()
+            t6 = threading.Thread(target = self.alert_Wakeup())
+            t6.start()
         else:
             self.label_eye = "SLEEPING"
         return self.label_eye
@@ -289,7 +314,7 @@ class Detect_final():
         self.draw_styled_landmarks(frame, results_body)
                
         self.i += 1
-        print(self.i)
+        # print(self.i)
         # #1.Check wakeup or sleeping
         if results_eye.multi_face_landmarks:
             # start = datetime.now()
@@ -303,8 +328,9 @@ class Detect_final():
             frame = cv2.flip(frame, 1)
             if len(self.ear_list) == self.frame_check_eye:
                 # predict
-                t1 = threading.Thread(target=self.detect_eye, args=(self.model_ear, self.ear_list, frame))
-                t1.start()
+                # TODO: Might need to uncomment later
+                # t1 = threading.Thread(target=self.detect_eye, args=(self.model_ear, self.ear_list, frame))
+                # t1.start()
                 self.ear_list = []                
         frame = self.draw_class_on_image_eye(self.label_eye, frame)
             
@@ -337,7 +363,7 @@ class Detect_final():
             
             t3 = threading.Thread(target = self.detect_outside , args = (self.test_point3, self.test_point2, self.test_point1, self.test_point5, self.test_point4, points, frame))
             t3.start()
- 
+
         frame = self.draw_class_on_image_outside(self.label_outside, frame)  
             # Flip the frame horizontally for a selfie-view display.
         return frame
