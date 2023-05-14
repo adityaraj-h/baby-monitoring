@@ -27,24 +27,24 @@ mp_drawing = mp.solutions.drawing_utils # Drawing utilities
 class Detect_final():
     def __init__(self):
         # TODO: Initialize the Token and CHAT_ID here
-        self.TOKEN = "5934982411:AAESp8WWokgcOrHOFO7vfFgZCwgdAkJuGj4"
-        self.CHAT_ID = 1572312862
+        self.TOKEN = "6091326249:AAEmpuAzxLyXEvrwodfSJkGL8_AYzDTIrEc"
+        self.CHAT_ID = 5364246081
         self.tel = TeleBot(self.TOKEN)
         self.i = 0
         self.j = 0
         self.k = 0        
         self.threshold = 0.12
-        self.frame_check_ouside = 10
+        self.frame_check_outside = 10
         self.frame_check_eye = 30
         self.frame_check_body = 30
         self.flag = 0
         self.sequence = []
         self.ear_list = []
-        self.sentence_lable = []
+        self.sentence_label = []
         self.label = "Waiting"
         self.label_eye = "Waiting"
         self.label_outside = "Waiting"       
-        self.flag_ouside = 0
+        self.flag_outside = 0
         self.model = keras.models.load_model("model")
         # TODO: Might need to uncomment later
         # self.model_ear = tf.keras.models.load_model("model30.h5")
@@ -74,7 +74,7 @@ class Detect_final():
 
         self.EAR_txt_pos = (10, 30)
         self.last_alert = None
-        self.alert_telegram_each = 60  # seconds
+        self.alert_telegram_each = 15  # seconds
 
     def draw_prediction(self, centroid, points):
         if isInside(points, centroid):
@@ -91,22 +91,22 @@ class Detect_final():
         return polygon.contains(centroid)
          
     def alert_Wakeup(self):
-        # thread = threading.Thread(target=self.tel.send_message(self.CHAT_ID, "Baby Outside"))
-        thread = threading.Thread(target=print("TELEGRAM => ", "Baby Outside"))
-        # thread1 = threading.Thread(target=voice_Alert_Outside())
-        
-        # thread2 = threading.Thread(target=self.tel.send_message(self.CHAT_ID, "Baby Moving"))
-        thread2 = threading.Thread(target=print("TELEGRAM => ", "Baby Moving"))
-        # thread3 = threading.Thread(target=voice_Alert_Moving())
-
-        # thread4 = threading.Thread(target=self.tel.send_message(self.CHAT_ID, "Baby Wakeup"))
-        thread4 = threading.Thread(target=print("TELEGRAM => ", "Baby Wakeup"))
-        # thread5 = threading.Thread(target=voice_Alert_Wakeup())
-
         if (self.last_alert is None) or (
-                (datetime.datetime.now() - self.last_alert).total_seconds() > self.alert_telegram_each):
+                (datetime.utcnow() - self.last_alert).total_seconds() > self.alert_telegram_each):
             
-            self.last_alert = datetime.datetime.now()
+            thread = threading.Thread(target=self.tel.send_message(self.CHAT_ID, "Baby Outside"))
+            # thread = threading.Thread(target=print("TELEGRAM => ", "Baby Outside"))
+            # thread1 = threading.Thread(target=voice_Alert_Outside())
+            
+            thread2 = threading.Thread(target=self.tel.send_message(self.CHAT_ID, "Baby Moving"))
+            # thread2 = threading.Thread(target=print("TELEGRAM => ", "Baby Moving"))
+            # thread3 = threading.Thread(target=voice_Alert_Moving())
+
+            thread4 = threading.Thread(target=self.tel.send_message(self.CHAT_ID, "Baby Wakeup"))
+            # thread4 = threading.Thread(target=print("TELEGRAM => ", "Baby Wakeup"))
+            # thread5 = threading.Thread(target=voice_Alert_Wakeup())
+
+            self.last_alert = datetime.utcnow()
 
             # if self.label == "MOVING" and self.label_outside == "OUTSIDE" and self.label_eye == "WAKE UP":
             if self.label == "MOVING" and self.label_outside == "OUTSIDE":
@@ -236,7 +236,7 @@ class Detect_final():
             self.label_outside = "OUTSIDE"                   
         else:
             self.label_outside = "INSIDE"
-            self.flag_ouside = 0                  
+            self.flag_outside = 0                  
         return self.label_outside
 
     def detect(self, model, lm_list, frame):
