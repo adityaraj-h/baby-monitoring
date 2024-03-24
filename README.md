@@ -1,4 +1,6 @@
-Gmail: trung.le170920@gmail.com
+
+Trung Lee was kind enough to provide the datasets he used to carry out this project
+Mail him here for better understanding this project. Gmail: trung.le170920@gmail.com
 
 Link Demo: https://www.youtube.com/watch?v=UfgYO6-Wxq8
 
